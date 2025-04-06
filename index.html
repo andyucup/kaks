@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aplikasi Skripsi Profesional</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background: #e8f0fe;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .container {
+      max-width: 1080px;
+      margin-top: 40px;
+    }
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .hidden {
+      display: none;
+    }
+    .table thead {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .btn i {
+      margin-right: 4px;
+    }
+    header {
+      background: #0d6efd;
+      color: white;
+      padding: 1rem 0;
+      text-align: center;
+      border-radius: 0 0 12px 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2><i class="fas fa-graduation-cap"></i> Sistem Pengendalian Skripsi Profesional</h2>
+  </header>
+
+  <div class="container">
+    <div id="loginSection" class="card p-4">
+      <div class="text-center mb-3">
+        <img src="logo.jpg" alt="Logo Universitas" width="100">
+      </div>
+      <h3 class="text-center mb-4">Login Aplikasi</h3>
+      <div class="d-grid gap-3">
+        <button class="btn btn-primary" onclick="loginAs('mahasiswa')"><i class="fas fa-user-graduate"></i> Login Sebagai Mahasiswa</button>
+        <button class="btn btn-success" onclick="loginAs('dosen')"><i class="fas fa-chalkboard-teacher"></i> Login Sebagai Dosen</button>
+      </div>
+    </div>
+
+    <div id="dashboardMahasiswa" class="hidden">
+      <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>Dashboard Mahasiswa</h4>
+          <button class="btn btn-outline-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+        <hr/>
+        <form onsubmit="ajukanJudul(); return false;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Judul Skripsi</label>
+              <input type="text" class="form-control" id="judulSkripsi" required/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Upload Proposal</label>
+              <input type="file" class="form-control" id="fileProposal" required/>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Deskripsi</label>
+              <textarea class="form-control" id="deskripsiSkripsi" rows="3" required></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3 w-100"><i class="fas fa-upload"></i> Ajukan Skripsi</button>
+        </form>
+      </div>
+      <div class="card p-4 mt-4">
+        <h5 class="mb-3">Status Pengajuan</h5>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Judul</th>
+              <th>Deskripsi</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="statusMahasiswa"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="dashboardDosen" class="hidden">
+      <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>Dashboard Dosen</h4>
+          <button class="btn btn-outline-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+        <hr/>
+        <h5>Daftar Pengajuan Mahasiswa</h5>
+        <table class="table table-bordered table-hover mt-3">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Judul</th>
+              <th>Deskripsi</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelDosen"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let role = localStorage.getItem('role') || '';
+    let pengajuanList = JSON.parse(localStorage.getItem('pengajuanList') || '[]');
+
+    function renderPage() {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('dashboardMahasiswa').classList.add('hidden');
+      document.getElementById('dashboardDosen').classList.add('hidden');
+      if (role === 'mahasiswa') {
+        document.getElementById('dashboardMahasiswa').classList.remove('hidden');
+        renderStatusMahasiswa();
+      } else if (role === 'dosen') {
+        document.getElementById('dashboardDosen').classList.remove('hidden');
+        renderTabelDosen();
+      } else {
+        document.getElementById('loginSection').classList.remove('hidden');
+      }
+    }
+
+    function loginAs(r) {
+      role = r;
+      localStorage.setItem('role', r);
+      renderPage();
+    }
+
+    function logout() {
+      localStorage.removeItem('role');
+      role = '';
+      renderPage();
+    }
+
+    function ajukanJudul() {
+      const judul = document.getElementById('judulSkripsi').value;
+      const deskripsi = document.getElementById('deskripsiSkripsi').value;
+      const file = document.getElementById('fileProposal').files[0];
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        pengajuanList.push({
+          nama: 'Mahasiswa 1',
+          judul,
+          deskripsi,
+          status: 'Menunggu',
+          fileProposal: reader.result
+        });
+        localStorage.setItem('pengajuanList', JSON.stringify(pengajuanList));
+        renderStatusMahasiswa();
+        document.querySelector('form').reset();
+        alert('Pengajuan berhasil!');
+      };
+      if (file) reader.readAsDataURL(file);
+      else alert('Upload file wajib.');
+    }
+
+    function renderStatusMahasiswa() {
+      const mahasiswa = pengajuanList.filter(p => p.nama === 'Mahasiswa 1');
+      let html = '';
+      mahasiswa.forEach(p => {
+        html += `<tr>
+          <td>${p.judul}</td>
+          <td>${p.deskripsi}</td>
+          <td><span class="badge bg-${p.status === 'Disetujui' ? 'success' : p.status === 'Ditolak' ? 'danger' : 'warning'}">${p.status}</span></td>
+        </tr>`;
+      });
+      document.getElementById('statusMahasiswa').innerHTML = html || '<tr><td colspan="3">Belum ada pengajuan</td></tr>';
+    }
+
+    function renderTabelDosen() {
+      let html = '';
+      pengajuanList.forEach((p, i) => {
+        html += `<tr>
+          <td>${p.nama}</td>
+          <td>${p.judul}</td>
+          <td>${p.deskripsi}</td>
+          <td><span class="badge bg-${p.status === 'Disetujui' ? 'success' : p.status === 'Ditolak' ? 'danger' : 'warning'}">${p.status}</span></td>
+          <td>
+            <button class='btn btn-sm btn-success me-1' onclick="setujui(${i})"><i class="fas fa-check"></i> Setujui</button>
+            <button class='btn btn-sm btn-danger' onclick="tolak(${i})"><i class="fas fa-times"></i> Tolak</button>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('tabelDosen').innerHTML = html || '<tr><td colspan="5">Belum ada pengajuan</td></tr>';
+    }
+
+    function setujui(index) {
+      pengajuanList[index].status = 'Disetujui';
+      localStorage.setItem('pengajuanList', JSON.stringify(pengajuanList));
+      renderTabelDosen();
+    }
+
+    function tolak(index) {
+      pengajuanList[index].status = 'Ditolak';
+      localStorage.setItem('pengajuanList', JSON.stringify(pengajuanList));
+      renderTabelDosen();
+    }
+
+    renderPage();
+  </script>
+</body>
+</html>
